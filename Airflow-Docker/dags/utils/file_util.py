@@ -1,29 +1,57 @@
+from asyncore import write
+from this import d
 import pandas as pd
 import numpy as np
-def cargar_datos(name):
+import dload
 
-    #df = pd.read_csv("http://bigdata-cluster4-01.virtual.uniandes.edu.co:50070/webhdfs/v1/datalakeBI/" + name + ".csv?op=OPEN&user.name=cursobi20", sep=',', encoding = 'latin-1', index_col=False)
-    df = pd.read_csv('/opt/airflow/data/' + name + '.csv' , encoding = 'latin-1', sep=',', index_col=False)
 
-    #numerics = df.select_dtypes(include=np.number).columns.tolist()
+def crear_archivos():
     
-    """if name == "dimension_stock_item":
-        df = df.rename(columns={"Stock_Item":"WWI_Stock_Item_ID"})
-        df["Tax_Rate"] = df["Tax_Rate"].str.replace(",","")
-        df["Unit_Price"] = df["Unit_Price"].str.replace(",",".")
-        df["Recommended_Retail_Price"] = df["Recommended_Retail_Price"].str.replace(",",".")
-        df["Typical_Weight_Per_Unit"] = df["Typical_Weight_Per_Unit"].str.replace(",","")
-        df["WWI_Stock_Item_ID"] = df["WWI_Stock_Item_ID"].str.replace("'", "''")
-    if name == "dimension_customer":
-        df["Customer"] = df["Customer"].str.replace("'", "''")
-    for j in df:
-        if j in numerics:
-            df[j].fillna(0, inplace=True)
-        else:
-            df[j].fillna("N/A", inplace=True)
-    """
-    return df
+    df = pd.read_excel("/opt/airflow/data/TerriData_Dim4.xlsx")
+    
+    df = df[df['Código Departamento'].notna()]
+    df = df[df['Código Entidad'].notna()]
+    df = df[df['Mes'].notna()]
+    df = df[df['Año'].notna()]
+
+    df_dpto = pd.DataFrame()
+    df_dpto["Código Departamento"] = df["Código Departamento"].astype('int')
+    df_dpto['Departamento'] = df['Departamento']
+    df_dpto.drop_duplicates(inplace=True)
+    guardar_datos(df_dpto, "dimension_departamento")
+    
+    df_entidad = pd.DataFrame()
+    df_entidad["Código Entidad"] = df["Código Entidad"].astype('int')
+    df_entidad['Entidad'] = df['Entidad']
+    df_entidad.drop_duplicates(inplace=True)
+    guardar_datos(df_entidad, "dimension_entidad")
+    
+    df_fecha = pd.DataFrame()
+    df_fecha["Calendar_Month_Number"] = df["Mes"]
+    df_fecha["Calendar_Year"] = df["Año"]
+    df_fecha["Date_key"] = df["Mes"].astype(str) + '-' + df.pop('Año').astype(str)
+    df_fecha.drop_duplicates(inplace=True)
+    guardar_datos(df_fecha, "dimension_date_table")
+
+
+
+    df_indicador = pd.DataFrame()
+    df_indicador["nombre"] = df["Indicador"]
+    df_indicador["subcategoria"] = df["Subcategoría"]
+    df_indicador["dato_numerico"] = df["Dato Numérico"]
+    df_indicador["dato_cualitativo"] = df["Dato Cualitativo"]
+    df_indicador["unidad"] = df["Unidad de Medida"]
+    df_indicador["fuente"] = df["Fuente"]
+    df_indicador["fecha_key"] = df_fecha["Date_key"]
+    guardar_datos(df_indicador, "fact_indicador")
 
 
 def guardar_datos(df, nombre):
-    df.to_csv('/opt/airflow/data/' + nombre + '.csv' , encoding = 'latin-1', sep=',', index=False)
+    df.to_csv('/opt/airflow/data/' + nombre + '.csv' , encoding = 'utf-8', sep=',', index=False)
+
+def descargar_datos():
+    dload.save_unzip("https://terridata.dnp.gov.co/assets/docs/excel/dimensiones/TerriData_Dim4.xlsx.zip", '/opt/airflow/data/', delete_after=True)
+
+def cargar_datos(name):
+    df = pd.read_csv('/opt/airflow/data/' + name + '.csv', encoding = 'utf-8', sep=',')
+    return df
