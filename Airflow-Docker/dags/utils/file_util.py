@@ -1,11 +1,8 @@
-from asyncore import write
-from this import d
 import pandas as pd
-import numpy as np
-import dload
+#import dload
 
 
-def crear_archivos():
+"""def crear_archivos():
     
     df = pd.read_excel("/opt/airflow/data/TerriData_Dim4.xlsx")
     
@@ -15,14 +12,14 @@ def crear_archivos():
     df = df[df['Año'].notna()]
 
     df_dpto = pd.DataFrame()
-    df_dpto["Código Departamento"] = df["Código Departamento"].astype('int')
-    df_dpto['Departamento'] = df['Departamento']
+    df_dpto["dpto_codigo"] = df["Código Departamento"].astype('int')
+    df_dpto['dpto_nombre'] = df['Departamento']
     df_dpto.drop_duplicates(inplace=True)
     guardar_datos(df_dpto, "dimension_departamento")
     
     df_entidad = pd.DataFrame()
-    df_entidad["Código Entidad"] = df["Código Entidad"].astype('int')
-    df_entidad['Entidad'] = df['Entidad']
+    df_entidad["entidad_codigo"] = df["Código Entidad"].astype('int')
+    df_entidad['entidad_nombre'] = df['Entidad']
     df_entidad.drop_duplicates(inplace=True)
     guardar_datos(df_entidad, "dimension_entidad")
     
@@ -43,6 +40,8 @@ def crear_archivos():
     df_indicador["unidad"] = df["Unidad de Medida"]
     df_indicador["fuente"] = df["Fuente"]
     df_indicador["fecha_key"] = df_fecha["Date_key"]
+    df_indicador["dpto_key"] = df["Código Departamento"].astype('int')
+    df_indicador["entidad_key"] = df["Código Entidad"].astype('int')
     guardar_datos(df_indicador, "fact_indicador")
 
 
@@ -51,7 +50,7 @@ def guardar_datos(df, nombre):
 
 def descargar_datos():
     dload.save_unzip("https://terridata.dnp.gov.co/assets/docs/excel/dimensiones/TerriData_Dim4.xlsx.zip", '/opt/airflow/data/', delete_after=True)
-
+"""
 def cargar_datos(name):
     df = pd.read_csv('/opt/airflow/data/' + name + '.csv', encoding = 'utf-8', sep=',')
     return df

@@ -2,7 +2,7 @@ def crear_tablas():
     return """
     
         CREATE TABLE IF NOT EXISTS date_table(
-            Date_key DATE PRIMARY KEY,
+            Date_key VARCHAR(150) PRIMARY KEY,
             Calendar_Month_Number INT,
             Calendar_Year INT
         );
@@ -25,7 +25,7 @@ def crear_tablas():
             dato_cualitativo VARCHAR(150),
             unidad VARCHAR(150),
             fuente VARCHAR(250),
-            fecha_key DATE REFERENCES date_table (date_key),
+            fecha_key VARCHAR(150) REFERENCES date_table (date_key),
             dpto_key INT REFERENCES departamento (dpto_codigo),
             entidad_key INT REFERENCES entidad (entidad_codigo)
         );

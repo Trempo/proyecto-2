@@ -1,35 +1,60 @@
-from re import T
+
 import pandas as pd
-import numpy as np
-import file_util
+import dload
+
+
+def crear_archivos():
+    
+    df = pd.read_excel("./data/TerriData_Dim4.xlsx")
+    
+    df = df[df['Código Departamento'].notna()]
+    df = df[df['Código Entidad'].notna()]
+    df = df[df['Mes'].notna()]
+    df = df[df['Año'].notna()]
+
+    df_dpto = pd.DataFrame()
+    df_dpto["dpto_codigo"] = df["Código Departamento"].astype('int')
+    df_dpto['dpto_nombre'] = df['Departamento']
+    df_dpto.drop_duplicates(inplace=True)
+    guardar_datos(df_dpto, "dimension_departamento")
+    
+    df_entidad = pd.DataFrame()
+    df_entidad["entidad_codigo"] = df["Código Entidad"].astype('int')
+    df_entidad['entidad_nombre'] = df['Entidad']
+    df_entidad.drop_duplicates(inplace=True)
+    guardar_datos(df_entidad, "dimension_entidad")
+    
+    df_fecha = pd.DataFrame()
+    df_fecha["Calendar_Month_Number"] = df["Mes"].astype('int')
+    df_fecha["Calendar_Year"] = df["Año"].astype('int')
+    df_fecha["Date_key"] = df["Mes"].astype('int').astype(str) + '-' + df.pop('Año').astype('int').astype(str)
+    df_fecha.drop_duplicates(inplace=True)
+    guardar_datos(df_fecha, "dimension_date_table")
+
+
+
+    df_indicador = pd.DataFrame()
+    df_indicador["nombre"] = df["Indicador"]
+    df_indicador["subcategoria"] = df["Subcategoría"]
+    df_indicador["dato_numerico"] = df["Dato Numérico"]
+    df_indicador["dato_cualitativo"] = df["Dato Cualitativo"]
+    df_indicador["unidad"] = df["Unidad de Medida"]
+    df_indicador["fuente"] = df["Fuente"]
+    df_indicador["fecha_key"] = df_fecha["Date_key"]
+    df_indicador["dpto_key"] = df["Código Departamento"].astype('int')
+    df_indicador["entidad_key"] = df["Código Entidad"].astype('int')
+    guardar_datos(df_indicador, "fact_indicador")
+
+
+def guardar_datos(df, nombre):
+    df.to_csv('./data/' + nombre + '.csv' , encoding = 'utf-8', sep=',', index=False)
+
+def descargar_datos():
+    dload.save_unzip("https://terridata.dnp.gov.co/assets/docs/excel/dimensiones/TerriData_Dim4.xlsx.zip", './data/', delete_after=True)
 
 def cargar_datos(name):
+    df = pd.read_csv('./data/' + name + '.csv', encoding = 'utf-8', sep=',')
+    return df
 
-    df = pd.read_csv("http://bigdata-cluster4-01.virtual.uniandes.edu.co:50070/webhdfs/v1/datalakeBI/dimension_" + name + ".csv?op=OPEN&user.name=cursobi20", sep=',', encoding = 'latin-1', index_col=False)
-
-    numerics = df.select_dtypes(include=np.number).columns.tolist()
-    
-    if name == "stock_item":
-        df["WWI_Stock_Item_ID"] = df["Stock_Item_Key"]
-        df["Tax_Rate"] = df["Tax_Rate"].str.replace(",","")
-        df["Unit_Price"] = df["Unit_Price"].str.replace(",",".")
-        df["Recommended_Retail_Price"] = df["Recommended_Retail_Price"].str.replace(",",".")
-        df["Typical_Weight_Per_Unit"] = df["Typical_Weight_Per_Unit"].str.replace(",","")
-        df["Stock_Item"] = df["Stock_Item"].str.replace("'", "''")
-    if name == "customer":
-        df["Customer"] = df["Customer"].str.replace("'", "''")
-    for j in df:
-        if j in numerics:
-            df[j].fillna(0, inplace=True)
-        else:
-            df[j].fillna("N/A", inplace=True)
-
-    df.to_csv('./data/dimension_' + name + '.csv' , encoding = 'latin-1', sep=',', index=False)
-
-
-dimensions=["city", "customer", "date", "employee", "stock_item"]
-
-for i in dimensions:
-    cargar_datos(i)
-
-
+descargar_datos()
+crear_archivos()
